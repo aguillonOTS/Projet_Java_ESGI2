@@ -1,0 +1,9 @@
+/* src/App.css */
+/* Nettoyage : Suppression des styles par défaut de Vite/React (logo spin, etc.)
+   L'application utilise principalement Tailwind CSS via index.css.
+   On garde ce fichier pour d'éventuels styles globaux spécifiques non gérés par Tailwind.
+*/
+
+.card {
+  padding: 2em;
+}

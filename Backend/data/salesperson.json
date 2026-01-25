@@ -1,0 +1,27 @@
+[ {
+  "id" : "admin-01",
+  "firstName" : "Admin",
+  "lastName" : "System",
+  "role" : "ADMIN",
+  "pinCode" : "03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4",
+  "permissions" : {
+    "manage_stock" : true,
+    "cash_out" : true,
+    "manage_users" : true,
+    "manage_menu" : true
+  },
+  "active" : true
+}, {
+  "id" : "staff-01",
+  "firstName" : "Mario",
+  "lastName" : "Rossi",
+  "role" : "SERVER",
+  "pinCode" : "9af15b336e6a9619928537df30b2e6a2376569fcf9d7e773eccede65606529a0",
+  "permissions" : {
+    "manage_stock" : false,
+    "cash_out" : true,
+    "manage_users" : false,
+    "manage_menu" : false
+  },
+  "active" : true
+} ]

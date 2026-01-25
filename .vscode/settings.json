@@ -1,0 +1,5 @@
+{
+    "java.configuration.updateBuildConfiguration": "interactive", 
+    "css.lint.unknownAtRules": "ignore",
+    "java.compile.nullAnalysis.mode": "automatic"
+}
