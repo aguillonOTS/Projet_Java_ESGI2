@@ -1,68 +1,57 @@
-# Pizzeria ESGI - Application de Caisse Fullstack
+# Pizzeria ESGI - Application de caisse Fullstack
 
-Application de gestion de Point de Vente (POS) pour une pizzeria, combinant une interface de prise de commande et un panneau d'administration.
+Application de Point de Vente (POS) pour une pizzeria, combinant une interface de prise de commande, un encaissement et un panneau d'administration complet.
 
-Ce projet est une application Fullstack (Spring Boot + React) packagée sous forme d'un exécutable unique pour simplifier le déploiement.
+Le projet est une application Fullstack Spring Boot + React packagée en un seul executable (`app.jar`) pour simplifier le deploiement.
 
-## Instructions de lancement (Windows)
+## Lancement (Windows)
 
-L'application est livrée prête à l'emploi. Aucun environnement de développement (Node.js, Maven) n'est nécessaire pour l'exécution.
+L'application est livree prete a l'emploi. Seul Java est requis pour l'execution.
 
-**Prérequis :** Java 21 (ou version ultérieure) doit être installé.
+**Prerequis :** Java 21 ou superieur installe et accessible dans le PATH.
 
-1.  Cloner ce dépôt.
-2.  Double-cliquer sur le fichier `START_PIZZERIA.bat` situé à la racine du projet.
-3.  Une fenêtre de commande va s'ouvrir pour démarrer le serveur.
-4.  Le navigateur s'ouvrira automatiquement sur `http://localhost:8080`.
+1. Cloner ce depot.
+2. Double-cliquer sur `START_PIZZERIA.bat` a la racine.
+3. Attendre le message `Started PizzeriaApplication` dans la console.
+4. Ouvrir un navigateur sur `http://localhost:8080`.
 
-Note : Si le navigateur ne s'ouvre pas automatiquement, attendez le message "Started PizzeriaApplication" dans la console, puis accédez manuellement à l'adresse locale.
+## Identifiants par defaut
 
-## Identifiants de connexion
-
-Deux profils sont pré-configurés pour tester les différentes fonctionnalités :
-
-| Rôle | Utilisateur | Code PIN | Accès |
+| Role | Prenom | Code PIN | Droits |
 | :--- | :--- | :--- | :--- |
-| **Administrateur** | Admin | `1234` | Accès complet (Stocks, Menu, Personnel, Caisse) |
-| **Serveur** | Mario | `0000` | Prise de commande et Encaissement uniquement |
+| Administrateur | Admin | `1234` | Acces complet (caisse, stocks, menu, personnel, clients) |
+| Serveur | Mario | `0000` | Prise de commande et encaissement uniquement |
 
-## Stack Technique
+## Stack technique
 
-**Backend :**
-* Java 21
-* Spring Boot 3.2
-* Stockage : Fichiers JSON (Pas de base de données externe à installer)
-* Sécurité : Hachage SHA-256 natif
+**Backend**
+- Java 21
+- Spring Boot 3.2.1
+- Persistance : fichiers JSON locaux (aucune base de donnees externe)
+- Securite : hachage SHA-256 (classe `SecurityUtils`)
 
-**Frontend :**
-* React 18
-* Vite
-* Tailwind CSS
-* Axios
+**Frontend**
+- React 19
+- Vite (bundler)
+- Tailwind CSS
+- Axios
 
-## Choix d'Architecture
+## Architecture
 
-### 1. Déploiement Monolithique
-Le frontend React est compilé et intégré directement dans les ressources statiques du backend Spring Boot. Cela permet de livrer un artefact unique (`app.jar`) qui gère à la fois l'API REST et le rendu des pages web.
+Le frontend React est compile et integre dans les ressources statiques du backend Spring Boot. L'artefact unique `app.jar` sert a la fois l'API REST sous `/api/*` et l'application React sous `/`.
 
-### 2. Sécurité des données
-* **Authentification :** Les mots de passe ne sont jamais stockés en clair. Le backend compare les empreintes SHA-256 lors de la connexion.
-* **Intégrité des commandes :** Le calcul du prix total est effectué exclusivement côté serveur (Backend) pour empêcher toute manipulation des montants via le navigateur.
+Toutes les regles metier (calcul des prix, remises, points de fidelite, gestion du stock) sont appliquees exclusivement cote serveur. Le frontend ne peut pas manipuler les montants.
 
-### 3. Persistance légère
-Pour répondre à la contrainte de portabilité, les données (utilisateurs, produits, commandes) sont stockées dans des fichiers JSON locaux. Le système inclut un mécanisme de "Seeding" qui recrée les données par défaut si les fichiers sont absents.
+## Recompiler le projet
 
-## Recompiler le projet (Optionnel)
+Si le code source est modifie, relancer `BUILD.bat` a la racine. Le script :
 
-Si vous souhaitez modifier le code source et régénérer l'exécutable `app.jar` :
+1. Installe les dependances npm et compile le frontend React.
+2. Telecharge Maven 3.9.9 dans `.build/` s'il est absent.
+3. Compile le backend Java avec Maven (`mvn clean package`).
+4. Copie le JAR produit dans `app.jar`.
 
-1.  Assurez-vous d'avoir **Node.js** et **Maven** installés.
-2.  Exécutez le script `build_app.bat` à la racine.
-3.  Le script va :
-    * Installer les dépendances Frontend et construire le bundle.
-    * Copier le bundle dans le Backend.
-    * Compiler le Backend avec Maven.
-    * Générer le nouveau `.jar` dans le dossier `Backend/target`.
+Node.js doit etre installe. Maven est gere automatiquement par le script.
 
 ---
 
