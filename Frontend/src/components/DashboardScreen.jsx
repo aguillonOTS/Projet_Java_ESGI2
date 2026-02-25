@@ -24,7 +24,7 @@ export default function DashboardScreen({ currentUser, openTables, tableCarts, o
             <button onClick={() => { const t = prompt("Table N°?"); if(t) onOpenTable(t); }} className="bg-orange-600 text-white h-40 rounded-2xl shadow-lg flex flex-col items-center justify-center gap-2 hover:bg-orange-700 hover:scale-[1.02] transition-all">
                 <Plus size={48}/> <span className="text-2xl font-bold">Nouvelle Table</span>
             </button>
-            {currentUser.permissions?.manage_stock && (
+            {(currentUser.role === 'ADMIN' || Object.values(currentUser.permissions || {}).some(v => v)) && (
                 <button onClick={onOpenAdmin} className="bg-slate-800 text-white h-40 rounded-2xl shadow-lg flex flex-col items-center justify-center gap-2 hover:bg-slate-900 hover:scale-[1.02] transition-all">
                 <Lock size={48}/> <span className="text-2xl font-bold">Administration</span>
                 </button>

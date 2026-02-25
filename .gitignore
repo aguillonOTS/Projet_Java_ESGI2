@@ -1,0 +1,31 @@
+# ── Dépendances Node ─────────────────────────────────────
+node_modules/
+Frontend/node_modules/
+
+# ── Artefacts de compilation Java ────────────────────────
+Backend/target/
+*.class
+
+# ── Assets React compilés (générés par npm run build) ────
+Backend/src/main/resources/static/assets/
+Backend/target/classes/static/
+
+# ── Données runtime (non versionner les données JSON) ────
+Backend/data/
+
+# ── Maven embarqué (téléchargé automatiquement) ──────────
+.build/
+
+# ── Logs ─────────────────────────────────────────────────
+build.log
+*.log
+
+# ── IDE / OS ─────────────────────────────────────────────
+.vscode/
+.idea/
+*.iml
+.DS_Store
+Thumbs.db
+
+# ── Claude (outil de dev, pas du code projet) ────────────
+.claude/
