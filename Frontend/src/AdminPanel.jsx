@@ -1,15 +1,16 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { ENDPOINTS } from './config'; // Configuration globale
-import { 
-    Package, Coffee, Users, ArrowLeft, BarChart3, TrendingUp, 
-    Receipt, CreditCard, Banknote, Calendar, Clock, Power
+import {
+    Package, Coffee, Users, ArrowLeft, BarChart3, TrendingUp,
+    Receipt, CreditCard, Banknote, Calendar, Clock, Power, UserCheck
 } from 'lucide-react';
 
 // Import des sous-composants
 import UsersPanel from './components/UsersPanel';
 import StockPanel from './components/StockPanel';
 import MenuPanel from './components/MenuPanel';
+import CustomersPanel from './components/CustomersPanel';
 
 /**
  * Écran d'administration complet.
@@ -147,13 +148,20 @@ export default function AdminPanel({ user, onBack }) {
           )}
 
           {user.permissions?.manage_users && (
-            <NavButton 
-                active={activeTab === 'USERS'} 
-                onClick={() => setActiveTab('USERS')} 
-                icon={<Users size={20}/>} 
-                label="Équipe" 
+            <NavButton
+                active={activeTab === 'USERS'}
+                onClick={() => setActiveTab('USERS')}
+                icon={<Users size={20}/>}
+                label="Équipe"
             />
           )}
+
+          <NavButton
+            active={activeTab === 'CUSTOMERS'}
+            onClick={() => setActiveTab('CUSTOMERS')}
+            icon={<UserCheck size={20}/>}
+            label="Clients"
+          />
         </nav>
 
         <button onClick={onBack} className="mt-auto flex items-center justify-center gap-2 text-slate-400 hover:text-white p-3 border border-slate-700 rounded-lg hover:bg-slate-800 transition-colors">
@@ -292,6 +300,7 @@ export default function AdminPanel({ user, onBack }) {
         {activeTab === 'STOCK' && <StockPanel />}
         {activeTab === 'MENU' && <MenuPanel />}
         {activeTab === 'USERS' && <UsersPanel />}
+        {activeTab === 'CUSTOMERS' && <CustomersPanel />}
 
       </div>
     </div>

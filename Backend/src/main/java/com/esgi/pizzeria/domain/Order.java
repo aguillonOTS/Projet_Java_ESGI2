@@ -18,11 +18,20 @@ public class Order {
     private String salespersonId;
     private int tableNumber;
     private String paymentMethod;
-    
+
     // CONSEIL : Utiliser LocalDateTime en interne et formater en String uniquement pour le JSON.
     // Pour l'instant, on garde String pour compatibilité avec votre JSON existant.
-    private String date; 
-    
+    private String date;
+
+    // Référence client optionnelle (pour la fidélité)
+    private String customerId;
+
+    // Montant de la remise appliquée (en euros)
+    private BigDecimal discountAmount;
+
+    // Raison de la remise (ex: "Fidélité: 200 pts", "Remise 10%")
+    private String discountReason;
+
     // Initialisation pour éviter null
     private List<OrderLine> items = new ArrayList<>();
 
@@ -49,6 +58,15 @@ public class Order {
 
     public String getDate() { return date; }
     public void setDate(String date) { this.date = date; }
+
+    public String getCustomerId() { return customerId; }
+    public void setCustomerId(String customerId) { this.customerId = customerId; }
+
+    public BigDecimal getDiscountAmount() { return discountAmount; }
+    public void setDiscountAmount(BigDecimal discountAmount) { this.discountAmount = discountAmount; }
+
+    public String getDiscountReason() { return discountReason; }
+    public void setDiscountReason(String discountReason) { this.discountReason = discountReason; }
 
     public List<OrderLine> getItems() { return items; }
     public void setItems(List<OrderLine> items) { this.items = items; }

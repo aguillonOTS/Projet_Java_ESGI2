@@ -9,6 +9,7 @@ import PosScreen from './components/PosScreen';
 import AdminPanel from './AdminPanel';
 import ReceiptModal from './components/ReceiptModal';
 import PaymentModal from './components/PaymentModal';
+import CustomerSearchModal from './components/CustomerSearchModal';
 
 import './App.css';
 
@@ -18,32 +19,32 @@ import './App.css';
  * Rôle :
  * 1. Gère le routage simple (View State) entre Login, Dashboard, POS et Admin.
  * 2. Maintient l'état global du restaurant (Tables ouvertes, Utilisateur connecté).
- * 3. Gère le flux de finalisation de commande (Paiement -> API).
+ * 3. Gère le flux de finalisation de commande (Client -> Remise -> Paiement -> API).
  * </p>
  */
 export default function App() {
-  
+
   // --- ÉTATS GLOBAUX ---
-  const [view, setView] = useState('LOGIN'); 
+  const [view, setView] = useState('LOGIN');
   const [currentUser, setCurrentUser] = useState(null);
-  
+
   // Données référentielles (chargées au démarrage)
   const [users, setUsers] = useState([]);
   const [products, setProducts] = useState([]);
-  
+
   // État opérationnel (Tables & Paniers)
   const [tableNumber, setTableNumber] = useState(null);
-  const [tableCarts, setTableCarts] = useState({}); 
-  const [openTables, setOpenTables] = useState([]); 
+  const [tableCarts, setTableCarts] = useState({});
+  const [openTables, setOpenTables] = useState([]);
 
   // Modales d'interaction
+  const [showCustomerSearch, setShowCustomerSearch] = useState(false);
   const [showPayment, setShowPayment] = useState(false);
   const [showReceipt, setShowReceipt] = useState(false);
   const [currentTransaction, setCurrentTransaction] = useState(null);
 
   /**
    * Initialisation : Récupération des données maîtres depuis le Backend.
-   * Utilise les ENDPOINTS définis dans config.js pour la maintenabilité.
    */
   useEffect(() => {
     axios.get(ENDPOINTS.SALESPERSONS)
@@ -55,79 +56,113 @@ export default function App() {
          .catch(err => console.error("Erreur critique chargement produits", err));
   }, []);
 
-  /**
-   * Met à jour le panier d'une table spécifique en temps réel.
-   * @param {number} tableNum - Numéro de la table.
-   * @param {Array} newCart - Liste des articles mis à jour.
-   */
   const updateTableCart = (tableNum, newCart) => {
     setTableCarts(prev => ({ ...prev, [tableNum]: newCart }));
   };
 
-  /**
-   * Simule l'envoi en cuisine (Step intermédiaire avant paiement).
-   */
   const handleSendOrder = () => {
     alert(`Commande pour la Table ${tableNumber} envoyée en cuisine ! 👨‍🍳🔥`);
     setView('DASHBOARD');
   };
 
   /**
-   * Ouvre la modale de paiement avec le montant calculé localement.
-   * @param {number} total - Montant total estimé.
-   * @param {Array} cart - Contenu du panier.
+   * Étape 1 : L'utilisateur clique "Encaisser".
+   * On ouvre d'abord la recherche client / remise.
    */
   const handleInitiatePayment = (total, cart) => {
     setCurrentTransaction({ total, cart });
+    setShowCustomerSearch(true);
+  };
+
+  /**
+   * Étape 2 : L'utilisateur a choisi (ou non) un client et ses remises.
+   * On passe au choix du moyen de paiement.
+   */
+  const handleCustomerConfirm = ({ customer, discountAmount, discountReason, finalTotal }) => {
+    setShowCustomerSearch(false);
+    setCurrentTransaction(prev => ({
+      ...prev,
+      customer,
+      discountAmount,
+      discountReason,
+      finalTotal
+    }));
     setShowPayment(true);
   };
 
   /**
-   * Finalise la transaction et l'envoie au Backend.
+   * Étape 3 : Finalise la transaction et l'envoie au Backend.
    * <p>
-   * SÉCURITÉ : Nous n'envoyons PAS le montant total au backend.
-   * Nous envoyons uniquement les articles (ID + Quantité).
-   * Le backend (OrderService) recalculera le prix pour certifier la transaction.
+   * SÉCURITÉ : On envoie uniquement les articles (ID + Quantité) + les infos de remise.
+   * Le backend (OrderService) recalcule le prix et applique la remise pour certifier la transaction.
    * </p>
-   * @param {string} method - Méthode de paiement ('CASH', 'CB', etc.)
    */
   const handleConfirmPayment = (method) => {
     setShowPayment(false);
-    
-    // Construction du DTO (Data Transfer Object) pour l'API
+
     const orderData = {
       salespersonId: currentUser.id,
       tableNumber: parseInt(tableNumber),
       paymentMethod: method,
-      // Mapping propre pour ne garder que les données essentielles
+      customerId: currentTransaction.customer?.id || null,
+      discountAmount: currentTransaction.discountAmount || 0,
+      discountReason: currentTransaction.discountReason || null,
       items: currentTransaction.cart.map(item => ({
-          id: item.id,
-          quantity: item.quantity
+        id: item.id,
+        quantity: item.quantity
       }))
     };
 
+    // Points avant la commande — pour calculer les points gagnés après
+    const previousPoints = currentTransaction.customer?.loyaltyPoints ?? 0;
+    const customerId = orderData.customerId;
+
     axios.post(ENDPOINTS.ORDERS, orderData)
       .then((response) => {
-        // Succès : La commande est persistée et validée par le serveur
-        setShowReceipt(true);
-        
-        // Nettoyage de l'état local (Table libérée)
-        const newCarts = { ...tableCarts };
-        delete newCarts[tableNumber];
-        setTableCarts(newCarts);
-        
-        // Retour à la vue salle
-        setView('DASHBOARD');
+        // Le serveur retourne la commande validée avec le total certifié
+        // (peut inclure une remise auto 5% appliquée côté serveur)
+        const savedOrder = response.data;
+
+        const finalize = (updatedCustomer) => {
+          // Points gagnés = différence calculée depuis le backend (source de vérité)
+          const pointsEarned = updatedCustomer
+            ? Math.max(0, updatedCustomer.loyaltyPoints - previousPoints)
+            : 0;
+
+          setCurrentTransaction(prev => ({
+            ...prev,
+            method,
+            finalTotal: savedOrder.totalAmount,
+            discountAmount: savedOrder.discountAmount ?? 0,
+            discountReason: savedOrder.discountReason ?? null,
+            customer: updatedCustomer ?? prev.customer,
+            pointsEarned,
+          }));
+          setShowReceipt(true);
+
+          // Nettoyage de l'état local (Table libérée)
+          const newCarts = { ...tableCarts };
+          delete newCarts[tableNumber];
+          setTableCarts(newCarts);
+          setView('DASHBOARD');
+        };
+
+        if (customerId) {
+          // Re-fetch du client pour avoir le solde exact après crédit des points
+          axios.get(`${ENDPOINTS.CUSTOMERS}/${customerId}`)
+            .then(r => finalize(r.data))
+            .catch(() => finalize(null));
+        } else {
+          finalize(null);
+        }
       })
       .catch(err => {
         console.error(err);
-        alert("Erreur encaissement : " + (err.response?.data?.message || "Erreur serveur inconnue"));
+        const message = err.response?.data?.message || "Erreur serveur inconnue";
+        alert("⚠️ " + message);
       });
   };
 
-  /**
-   * Ferme le ticket de caisse et réinitialise la table courante.
-   */
   const handleCloseReceipt = () => {
     setShowReceipt(false);
     setCurrentTransaction(null);
@@ -139,18 +174,18 @@ export default function App() {
 
   if (view === 'LOGIN') {
     return (
-        <LoginScreen 
-            users={users} 
-            onLogin={(u) => { setCurrentUser(u); setView('DASHBOARD'); }} 
+        <LoginScreen
+            users={users}
+            onLogin={(u) => { setCurrentUser(u); setView('DASHBOARD'); }}
         />
     );
   }
 
   if (view === 'ADMIN') {
     return (
-        <AdminPanel 
-            user={currentUser} 
-            onBack={() => setView('DASHBOARD')} 
+        <AdminPanel
+            user={currentUser}
+            onBack={() => setView('DASHBOARD')}
         />
     );
   }
@@ -158,15 +193,14 @@ export default function App() {
   if (view === 'DASHBOARD') {
     return (
       <>
-        <DashboardScreen 
-          currentUser={currentUser} 
+        <DashboardScreen
+          currentUser={currentUser}
           openTables={openTables}
           tableCarts={tableCarts}
           onLogout={() => setView('LOGIN')}
           onOpenAdmin={() => setView('ADMIN')}
           onOpenTable={(num) => {
               const tableInt = parseInt(num);
-              // Ajout à la liste des tables ouvertes si nouveau
               if (!openTables.includes(tableInt)) {
                   setOpenTables(prev => [...prev, tableInt].sort((a,b) => a - b));
               }
@@ -174,14 +208,18 @@ export default function App() {
               setView('POS');
           }}
         />
-        {/* Affichage conditionnel du ticket après paiement */}
         {showReceipt && currentTransaction && (
-          <ReceiptModal 
-            cart={currentTransaction.cart} 
-            total={currentTransaction.total} 
-            tableNumber={tableNumber} 
+          <ReceiptModal
+            cart={currentTransaction.cart}
+            total={currentTransaction.finalTotal ?? currentTransaction.total}
+            subtotal={currentTransaction.total}
+            discountAmount={currentTransaction.discountAmount}
+            discountReason={currentTransaction.discountReason}
+            customer={currentTransaction.customer}
+            pointsEarned={currentTransaction.pointsEarned ?? 0}
+            tableNumber={tableNumber}
             paymentMethod={currentTransaction.method || 'CB'}
-            onClose={handleCloseReceipt} 
+            onClose={handleCloseReceipt}
           />
         )}
       </>
@@ -191,7 +229,7 @@ export default function App() {
   if (view === 'POS') {
     return (
       <>
-        <PosScreen 
+        <PosScreen
           currentUser={currentUser}
           tableNumber={tableNumber}
           products={products}
@@ -201,14 +239,25 @@ export default function App() {
           onPay={(total, cart) => handleInitiatePayment(total, cart)}
           onExit={() => setView('DASHBOARD')}
         />
-        
-        {/* Modale de choix de paiement */}
+
+        {/* Étape 1 : Recherche client + remises */}
+        {showCustomerSearch && currentTransaction && (
+          <CustomerSearchModal
+            subtotal={currentTransaction.total}
+            onConfirm={handleCustomerConfirm}
+            onClose={() => setShowCustomerSearch(false)}
+          />
+        )}
+
+        {/* Étape 2 : Choix du moyen de paiement */}
         {showPayment && currentTransaction && (
-           <PaymentModal 
-             total={currentTransaction.total}
-             onClose={() => setShowPayment(false)}
-             onConfirm={handleConfirmPayment}
-           />
+          <PaymentModal
+            total={currentTransaction.finalTotal ?? currentTransaction.total}
+            subtotal={currentTransaction.total}
+            discountAmount={currentTransaction.discountAmount}
+            onClose={() => setShowPayment(false)}
+            onConfirm={handleConfirmPayment}
+          />
         )}
       </>
     );

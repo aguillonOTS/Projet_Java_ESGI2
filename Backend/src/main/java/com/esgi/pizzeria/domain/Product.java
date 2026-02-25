@@ -37,6 +37,20 @@ public abstract class Product {
     private ProductStatus status;
     private BigDecimal vat; // Taux de TVA (Value Added Tax)
 
+    /**
+     * Stock disponible en portions/unités.
+     * null  = jamais initialisé (migration automatique au démarrage)
+     * 0     = illimité / non suivi
+     * > 0   = stock actif (bloque la commande si insuffisant)
+     */
+    private Integer stock = null;
+
+    /**
+     * Catégorie d'affichage dans le POS (ex: PIZZA, PASTA, DESSERT, SOFT, BEER, WINE_RED…).
+     * null = pas encore catégorisé (migration automatique au démarrage).
+     */
+    private String category = null;
+
     public Product() {
         // Constructeur vide requis par Jackson
     }
@@ -64,4 +78,10 @@ public abstract class Product {
 
     public BigDecimal getVat() { return vat; }
     public void setVat(BigDecimal vat) { this.vat = vat; }
+
+    public Integer getStock() { return stock; }
+    public void setStock(Integer stock) { this.stock = stock; }
+
+    public String getCategory() { return category; }
+    public void setCategory(String category) { this.category = category; }
 }

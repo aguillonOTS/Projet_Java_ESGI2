@@ -14,5 +14,6 @@ export const ENDPOINTS = {
     PRODUCTS: `${API_BASE_URL}/products`,
     ORDERS: `${API_BASE_URL}/orders`,
     SALESPERSONS: `${API_BASE_URL}/salespersons`,
-    INGREDIENTS: `${API_BASE_URL}/ingredients`
+    INGREDIENTS: `${API_BASE_URL}/ingredients`,
+    CUSTOMERS: `${API_BASE_URL}/customers`
 };

@@ -69,10 +69,23 @@ public class JsonCustomerRepository {
         }
     }
 
+    public Optional<Customer> findById(String id) {
+        synchronized (database) {
+            return database.stream()
+                    .filter(c -> c.getId().equals(id))
+                    .findFirst();
+        }
+    }
+
     public synchronized Customer save(Customer customer) {
         database.removeIf(c -> c.getId().equals(customer.getId()));
         database.add(customer);
         saveToFile();
         return customer;
+    }
+
+    public synchronized void deleteById(String id) {
+        database.removeIf(c -> c.getId().equals(id));
+        saveToFile();
     }
 }

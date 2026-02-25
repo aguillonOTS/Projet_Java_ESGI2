@@ -86,27 +86,11 @@ export default function PosScreen({ currentUser, tableNumber, products, initialC
   /**
    * OPTIMISATION DE PERFORMANCE (useMemo)
    * Filtre les produits à afficher selon la catégorie sélectionnée.
+   * Utilise le champ `category` fourni par le backend — aucune heuristique sur le nom.
    * Ne recalcule que si 'products' ou 'selectedCategory' changent.
    */
   const displayedProducts = useMemo(() => {
-    return products.filter(p => {
-      const name = p.name ? p.name.toUpperCase() : '';
-      const type = p.type; 
-      
-      // Filtrage métier basique sur le nom et le type
-      switch (selectedCategory) {
-        case 'PIZZA': return type === 'DISH' && name.includes('PIZZA');
-        case 'PASTA': return type === 'DISH' && (name.includes('PASTA') || name.includes('TAGLIATELLE') || name.includes('LASAGNE'));
-        case 'DESSERT': return type === 'DISH' && (name.includes('TIRAMISU') || name.includes('GLACE') || name.includes('MOUSSE') || name.includes('PANNA') || name.includes('DESSERT'));
-        case 'SOFT': return type === 'DRINK' && !p.isAlcoholic;
-        case 'BEER': return type === 'DRINK' && (name.includes('BIÈRE') || name.includes('HEINEKEN') || name.includes('PERONI') || name.includes('MORETTI'));
-        case 'WINE_RED': return type === 'DRINK' && (name.includes('ROUGE') || name.includes('CHIANTI') || name.includes('BAROLO') || name.includes('BORDEAUX') || name.includes('NERO'));
-        case 'WINE_WHITE': return type === 'DRINK' && (name.includes('BLANC') || name.includes('PINOT') || name.includes('CHABLIS') || name.includes('SANCERRE'));
-        case 'WINE_ROSE': return type === 'DRINK' && (name.includes('ROSÉ') || name.includes('PROVENCE'));
-        case 'APERITIF': return type === 'DRINK' && (name.includes('SPRITZ') || name.includes('MARTINI'));
-        default: return false;
-      }
-    });
+    return products.filter(p => p.category === selectedCategory);
   }, [products, selectedCategory]);
 
   /**

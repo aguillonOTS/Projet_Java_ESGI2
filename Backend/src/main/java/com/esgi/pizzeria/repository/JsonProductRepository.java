@@ -1,5 +1,6 @@
 package com.esgi.pizzeria.repository;
 
+import com.esgi.pizzeria.domain.Dish;
 import com.esgi.pizzeria.domain.Product;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -44,6 +45,63 @@ public class JsonProductRepository {
         if (database.isEmpty()) {
             seedData();
         }
+
+        // MIGRATION : initialise le stock pour les produits qui n'en ont pas encore
+        // (stock == null = champ absent du JSON existant, jamais initialisé)
+        boolean migrated = false;
+        synchronized (database) {
+            for (Product p : database) {
+                if (p.getStock() == null) {
+                    // Plats : 20 portions par défaut. Boissons : 50 unités.
+                    p.setStock(p instanceof Dish ? 20 : 50);
+                    migrated = true;
+                }
+            }
+        }
+        if (migrated) {
+            saveToFile();
+            logger.info("Migration stock : valeurs par défaut appliquées aux produits existants.");
+        }
+
+        // MIGRATION : initialise la catégorie pour les produits qui n'en ont pas encore
+        boolean categoryMigrated = false;
+        synchronized (database) {
+            for (Product p : database) {
+                if (p.getCategory() == null) {
+                    p.setCategory(inferCategory(p));
+                    categoryMigrated = true;
+                }
+            }
+        }
+        if (categoryMigrated) {
+            saveToFile();
+            logger.info("Migration catégories : catégories déduites pour les produits existants.");
+        }
+    }
+
+    /**
+     * Déduit la catégorie POS d'un produit à partir de son ID et de son nom.
+     * Utilisé uniquement lors de la migration initiale.
+     */
+    private static String inferCategory(Product product) {
+        String id   = product.getId()   != null ? product.getId().toUpperCase()   : "";
+        String name = product.getName() != null ? product.getName().toUpperCase() : "";
+
+        if (id.startsWith("PIZ"))     return "PIZZA";
+        if (id.startsWith("PASTA"))   return "PASTA";
+        if (id.startsWith("DESSERT")) return "DESSERT";
+        if (id.startsWith("SOFT"))    return "SOFT";
+        if (id.startsWith("BEER"))    return "BEER";
+        if (id.startsWith("WINE")) {
+            if (name.contains("ROSÉ") || name.contains("ROSE") || name.contains("PROVENCE"))
+                return "WINE_ROSE";
+            if (name.contains("BLANC") || name.contains("PINOT") || name.contains("CHABLIS")
+                    || name.contains("SANCERRE") || name.contains("PÉTILLANT"))
+                return "WINE_WHITE";
+            return "WINE_RED"; // rouge par défaut pour les vins non classifiés
+        }
+        if (id.startsWith("APERITIF") || id.startsWith("APERO")) return "APERITIF";
+        return product instanceof Dish ? "DISH" : "DRINK";
     }
 
     private void seedData() {

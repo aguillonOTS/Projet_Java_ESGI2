@@ -15,10 +15,12 @@ com\esgi\pizzeria\controller\OrderController.class
 com\esgi\pizzeria\repository\JsonSettingsRepository.class
 com\esgi\pizzeria\domain\Dish.class
 com\esgi\pizzeria\repository\JsonOrderRepository$1.class
+com\esgi\pizzeria\controller\CustomerController.class
 com\esgi\pizzeria\repository\JsonIngredientRepository$1.class
 com\esgi\pizzeria\repository\JsonSalespersonRepository$1.class
 com\esgi\pizzeria\service\SalespersonService.class
 com\esgi\pizzeria\repository\JsonProductRepository$2.class
+com\esgi\pizzeria\service\CustomerService.class
 com\esgi\pizzeria\domain\Ingredient.class
 com\esgi\pizzeria\domain\Product.class
 com\esgi\pizzeria\controller\SalespersonController.class

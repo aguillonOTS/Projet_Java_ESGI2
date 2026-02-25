@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(where java)",
+      "Bash(java -version)",
+      "Bash(winget --version)",
+      "Bash(scoop --version)",
+      "Bash(where node)",
+      "Bash(node --version)",
+      "Bash(where npm)",
+      "Bash(npm --version)"
+    ]
+  }
+}
